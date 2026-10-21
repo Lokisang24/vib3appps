@@ -330,7 +330,7 @@ function endStream(room) {
 
 /* --------------------------------------------------------------------- app */
 const app = express();
-app.set('trust proxy', true);
+app.set('trust proxy', 1);
 app.use(helmet({
   xFrameOptions: false,
   contentSecurityPolicy: {
@@ -351,7 +351,7 @@ const jsonPicture = express.json({ limit: '450kb' });
 app.use((req, res, next) => (req.path === '/api/profile/avatar' || req.path === '/api/profile/banner' ? jsonPicture : jsonSmall)(req, res, next));
 const limiter = o => rateLimit({
   standardHeaders: true, legacyHeaders: false,
-  validate: { xForwardedForHeader: false, forwardedHeader: false },
+  validate: { trustProxy: false, xForwardedForHeader: false, forwardedHeader: false },
   handler: (_req, res) => res.status(429).json({ error: 'Too many requests. Please slow down and try again in a minute.' }), ...o
 });
 app.use('/api/', limiter({ windowMs: 60000, max: 300 }));
