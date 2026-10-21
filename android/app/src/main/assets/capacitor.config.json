@@ -1,0 +1,14 @@
+{
+	"appId": "app.novastream.live",
+	"appName": "NovaStream",
+	"webDir": "public",
+	"server": {
+		"url": "https://ais-pre-ua3zfv2zbjnh2hdigaixed-469771892452.europe-west2.run.app",
+		"cleartext": false
+	},
+	"android": {
+		"allowMixedContent": true,
+		"captureInput": true,
+		"webContentsDebuggingEnabled": true
+	}
+}

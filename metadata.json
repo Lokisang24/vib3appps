@@ -1,0 +1,6 @@
+{
+  "name": "Mobile App Workspace",
+  "description": "Convert and run mobile and web applications with interactive preview.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
