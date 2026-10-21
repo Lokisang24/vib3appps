@@ -13,18 +13,6 @@
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
-  <div id="android-download-bar" style="background:#0f172a; color:#f8fafc; padding:10px 16px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #334155; font-family:system-ui,-apple-system,sans-serif; font-size:13px; z-index:9999; position:relative;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <span style="font-size:16px;">📦</span>
-      <span><strong>Android APK Package</strong> — Ready to build &amp; install</span>
-    </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <a href="/novastream-android.zip" download="novastream-android.zip" style="background:#2563eb; color:#ffffff; padding:6px 14px; border-radius:6px; text-decoration:none; font-weight:600; display:inline-flex; align-items:center; gap:6px; cursor:pointer;">
-        ⬇ Download ZIP (748 KB)
-      </a>
-      <button onclick="this.closest('#android-download-bar').remove()" style="background:transparent; border:none; color:#94a3b8; font-size:18px; cursor:pointer; line-height:1; padding:2px 6px;" title="Dismiss">×</button>
-    </div>
-  </div>
   <header id="top"></header>
   <div id="banner" hidden></div>
   <div id="layout">
@@ -33,7 +21,7 @@
   </div>
   <div id="scrim"></div>
   <div id="toasts" aria-live="polite"></div>
-  <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io.min.js"></script>
   <script src="/icons.js"></script>
   <script src="/social.js"></script>
   <script src="/admin.js"></script>

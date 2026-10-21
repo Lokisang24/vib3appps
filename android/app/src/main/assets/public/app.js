@@ -25,6 +25,18 @@ function h(tag, attrs, ...kids) {
   return el;
 }
 
+const DEFAULT_REMOTE_BACKEND = 'https://lukaymobileapps-502240410285.europe-west2.run.app';
+const IS_NATIVE_SHELL = (typeof window !== 'undefined' && (window.Capacitor !== undefined || location.protocol === 'capacitor:' || (location.hostname === 'localhost' && (!location.port || location.port === '80'))));
+const API_BASE = IS_NATIVE_SHELL
+  ? (localStorage.getItem('novastream_server_url') || DEFAULT_REMOTE_BACKEND)
+  : '';
+
+function apiUrl(path) {
+  if (!path || /^https?:\/\//i.test(path)) return path;
+  return API_BASE + path;
+}
+window.NovaStreamApiUrl = apiUrl;
+
 const S = {
   token: localStorage.getItem('novastream_token'),
   user: null,
@@ -38,7 +50,8 @@ const S = {
 };
 
 async function api(path, opts = {}) {
-  const res = await fetch(path, {
+  const url = apiUrl(path);
+  const res = await fetch(url, {
     method: opts.method || 'GET',
     headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) },
     body: opts.body ? JSON.stringify(opts.body) : undefined
@@ -112,9 +125,12 @@ function reportDialog({ type, target, username, context, label }) {
 const verifiedMark = () => h('span', { class: 'vtick', title: 'Verified identity (this is not an endorsement of what they say)', 'aria-label': 'Verified' }, '✓');
 
 function connectSocket() {
-  if (S.socket) S.socket.disconnect();
-  S.socket = io({ auth: { token: S.token } });
-  S.socket.on('notify', n => { setUnread((S.unread || 0) + 1); toast(n.text, 5000, n.link); });
+  if (typeof io !== 'function') return;
+  if (S.socket) { try { S.socket.disconnect(); } catch {} }
+  try {
+    S.socket = io(API_BASE || undefined, { auth: { token: S.token } });
+    S.socket.on('notify', n => { setUnread((S.unread || 0) + 1); toast(n.text, 5000, n.link); });
+  } catch (e) { console.warn('Socket init:', e); }
 }
 function setUnread(n) {
   S.unread = n;
@@ -1385,7 +1401,7 @@ async function route() {
 
 async function loadSite() {
   try {
-    const s = await fetch('/api/site').then(r => r.json());
+    const s = await fetch(apiUrl('/api/site')).then(r => r.json());
     const bn = $('#banner');
     const msg = s.maintenance ? s.maintenanceMessage : s.announcement;
     bn.hidden = !msg;
@@ -1402,7 +1418,7 @@ function siteFooter() {
   return h('footer', { class: 'sitefoot' }, h('a', { href: '#/legal/guidelines' }, 'Community Guidelines'), h('a', { href: '#/legal/terms' }, 'Terms'),
     h('a', { href: '#/legal/privacy' }, 'Privacy'), S.user && h('a', { href: '#/settings' }, 'Account settings'), h('span', null, 'NovaStream'));
 }
-const NS = { icon: window.NSIcons.icon, twitchColor, h, S, api, fill, add, toast, avatar, go, ago, field, initial, streamCard, route, setUnread, BANNERS, report: reportDialog, verifiedMark, logout, loadSite, siteFooter, renderTop, renderSide, connectSocket, sessionExpired };
+const NS = { icon: window.NSIcons.icon, twitchColor, h, S, api, apiUrl, API_BASE, fill, add, toast, avatar, go, ago, field, initial, streamCard, route, setUnread, BANNERS, report: reportDialog, verifiedMark, logout, loadSite, siteFooter, renderTop, renderSide, connectSocket, sessionExpired };
 const SOC = window.NSPages.register(NS);
 const ADM = window.NSAdmin.register(NS);
 const REP = window.NSReplay.register(NS, SOC);
@@ -1414,20 +1430,32 @@ document.addEventListener('focusin', e => {
 
 /* ----------------------------------------------------------------- boot */
 (async function init() {
-  if (S.token) {
-    try { const me = await api('/api/me', { noExpire: true }); S.user = me.user; S.unread = me.unread || 0; }
-    catch { S.token = null; localStorage.removeItem('novastream_token'); }
-  }
-  try { Object.assign(S.cfg, await api('/api/config')); } catch { /* defaults */ }
-  await loadBlocks();
-  connectSocket();
-  renderTop(); renderSide(); loadSite(); syncTimezone();
-  setInterval(loadSite, 300000);
+  renderTop();
+  renderSide();
+  route();
   window.addEventListener('hashchange', route);
   $('#scrim').addEventListener('click', closeDrawer);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
   setInterval(() => { if (!document.hidden) renderSide(); }, 30000);
-  route();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+
+  if (S.token) {
+    try {
+      const me = await api('/api/me', { noExpire: true });
+      S.user = me.user;
+      S.unread = me.unread || 0;
+      renderTop();
+      renderSide();
+    } catch {
+      S.token = null;
+      localStorage.removeItem('novastream_token');
+    }
+  }
+  try { Object.assign(S.cfg, await api('/api/config')); } catch { /* defaults */ }
+  await loadBlocks().catch(() => {});
+  connectSocket();
+  loadSite().catch(() => {});
+  syncTimezone();
+  setInterval(loadSite, 300000);
+  if ('serviceWorker' in navigator && location.protocol !== 'capacitor:') navigator.serviceWorker.register('/sw.js').catch(() => {});
 })();
 })();

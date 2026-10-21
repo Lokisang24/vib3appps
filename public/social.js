@@ -102,7 +102,8 @@ window.NSPages = {
       return { blob, kind: 'image', thumb: small.toDataURL('image/jpeg', 0.7) };
     }
     async function uploadMedia(blob) {
-      const res = await fetch('/api/media', { method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream', Authorization: 'Bearer ' + S.token }, body: blob });
+      const url = NS.apiUrl ? NS.apiUrl('/api/media') : '/api/media';
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': blob.type || 'application/octet-stream', Authorization: 'Bearer ' + S.token }, body: blob });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'The upload did not finish. Please try again.');
       return data;
